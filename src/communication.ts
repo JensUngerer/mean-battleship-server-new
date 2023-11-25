@@ -1,22 +1,31 @@
 import { IMessage } from './../../common/src/communication/message/iMessage';
 import { SocketIoReceiveTypes } from './../../common/src/communication/socketIoReceiveTypes';
-import socketIo from 'socket.io';
+// import socketIo from 'socket.io';
 
 export class Communication {
   private readonly NO_GAME_PARTNER_FOUND = '';
   private readonly NO_MATCHING_GAME_PARTNER = '';
   private userIdSocketId: any = {};
   private usersMap: any = {};
+  private ws: any;
 
-  constructor(private io: socketIo.Server) {}
+
+  public setWS(ws: any) {
+    this.ws = ws;
+  }
+
+  constructor() {}
 
   public emit(msg: IMessage) {
     // this.debugPrint(msg);
 
     msg.targetUserId = this.getTargetUser(msg.sourceUserId);
     // http://stackoverflow.com/questions/24041220/sending-message-to-a-specific-id-in-socket-io-1-0
-    const targetSocketId: string = this.userIdSocketId[msg.targetUserId as string];
-    this.io.to(targetSocketId).emit(msg.type, msg);
+    // const targetSocketId: string = this.userIdSocketId[msg.targetUserId as string];
+    // this.ws.to(targetSocketId).emit(msg.type, msg);
+    console.log('trying to send:' + JSON.stringify(msg));
+    
+    this.ws.send(JSON.stringify(msg));
   }
 
   public addUser(userId: string, socketId: string) {

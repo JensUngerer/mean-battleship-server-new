@@ -5,10 +5,13 @@ import { Server } from 'http';
 import http from 'http';
 import socketIo, { Socket, Server as SocketIoServer } from 'socket.io';
 import path from 'path';
+import { WebSocket, WebSocketServer } from 'ws';
 
 import { Communication } from './communication';
 
 import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
+import { IMessage } from '../../common/src/communication/message/iMessage';
+import { randomInt } from 'crypto';
 // import { SocketIoSendTypes } from './../../common/src/communication/socketIoSendTypes';
 // import { SocketIoReceiveTypes } from '../../common/src/communication/socketIoReceiveTypes';
 
@@ -19,9 +22,9 @@ import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
 export class App {
     private express: Application;
     private server: Server;
-    private io: SocketIoServer<any>;
+    // private io: SocketIoServer<any>;
     // private socket: Socket;
-
+    private ws: any;
     private communication: Communication;
     private messageForwarder: MessageForwarder;
 
@@ -29,8 +32,8 @@ export class App {
         this.express = express();
         this.server = http.createServer(this.express);
         // const options: socketIo.ServerOptions = {};
-        this.io = new SocketIoServer(this.server);
-        this.communication = new Communication(this.io);
+        // this.io = new SocketIoServer(this.server);
+        this.communication = new Communication();
         this.messageForwarder = new MessageForwarder(this.communication, ConfigSocketIo.PORT);
     }
 
@@ -62,15 +65,37 @@ export class App {
         const port: number = ConfigSocketIo.PORT;
         this.server.listen(port, () => {
             // DEBUGGING:
-            console.error('listening on:' + port);
+            console.info('listening on:' + port);
         });
 
-        this.io.on(ConfigSocketIo.SOCKET_IO_CONNECT_ID, (socket: Socket) => {
-            // DEBUGGING:
-            console.error('client connected on port:' + port);
+        // this.io.on(ConfigSocketIo.SOCKET_IO_CONNECT_ID, (socket: Socket) => {
+        //     // DEBUGGING:
+        //     console.error('client connected on port:' + port);
 
-            const socketId: string = socket.id;
-            this.messageForwarder.registerOnSocket(socketId, socket);
+        //     const socketId: string = socket.id;
+        //     this.messageForwarder.registerOnSocket(socketId, socket);
+        // });
+
+        // https://javascript-conference.com/blog/real-time-in-angular-a-journey-into-websocket-and-rxjs/
+        // port: ConfigSocketIo.PORT_WS, path: ConfigSocketIo.SOCKET_IO_SERVER_URL_WS
+        const wss = new WebSocketServer<any, any>({ server: this.server, });
+        wss.on(ConfigSocketIo.WS_CONNECT_ID, (ws: any, socket: any) => {
+            this.ws = ws;
+            this.communication.setWS(ws);
+
+            const randomId : string = randomInt(10000).toString();
+            console.info('client connected on port:' + port + 'id:' + randomId);
+            this.messageForwarder.registerOnSocket(randomId, ws);
+            // onConnection(ws);
+            //     ws.on('message', message => {
+            //       onMessage(message, ws);
+            //     });
+            //     ws.on('error', error => {
+            //       OnError(error);
+            //     });
+            //      ws.on('close', ws=> {
+            //       onClose();
+            //   })
         });
     }
 
@@ -90,9 +115,15 @@ export class App {
                 }
                 console.error('http-server successfully closed');
 
-                this.io.close(() => {
-                    console.error('socketIO.server closed');
-                });
+                // this.io.close(() => {
+                //     console.error('socketIO.server closed');
+                // });
+                this.ws.close(
+                    () => {
+                        console.info('ws - server: closed');
+                    }
+                );
+
 
                 resolve(true)
             });
