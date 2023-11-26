@@ -22,55 +22,58 @@ export class MessageForwarder {
         }
     }
 
-    public registerOnSocket(socketId: string, socket: Socket) {
-        this.socketIdSocket[socketId] = socket;
+    public registerOnSocket(userId: string, socket: any) {
+        // this.socketIdSocket[socketId] = socket;
 
-        socket.on(ConfigSocketIo.SOCKET_IO_DISCONNECT_ID, () => {
+        socket.on(ConfigSocketIo.WS_CLOSE_ID, () => {
             // DEBUGGING:
             console.log('client disconnected on port:' + this.port);
 
-            this.communication.removeUser(this.socketIdUserId[socketId]);
-            delete this.socketIdUserId[socketId];
+            this.communication.removeUser(userId);
         });
 
-        socket.on(SocketIoSendTypes.StartGame, (incomingMessage: IMessage) => {
-            this.debugPrintMessage(incomingMessage);
-            const userId: string = incomingMessage.sourceUserId;
-            this.communication.emitResponse(incomingMessage, socketId);
+        socket.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: any) => {
+            console.log('incoming:' + message);
+        });
+
+        // socket.on(SocketIoSendTypes.StartGame, (incomingMessage: IMessage) => {
+        //     this.debugPrintMessage(incomingMessage);
+        //     const userId: string = incomingMessage.sourceUserId;
+        //     // this.communication.emit(incomingMessage, socketId);
             
-            this.socketIdUserId[userId] = userId;
-            this.communication.addUser(userId, socketId, incomingMessage);
-        });
+        //     this.socketIdUserId[userId] = userId;
+        //     this.communication.addUser(userId, socketId, incomingMessage);
+        // });
 
-        socket.on(SocketIoSendTypes.Coordinates, (incomingMessage: ICoordinatesMessage) => {
-            this.debugPrintMessage(incomingMessage);
-            this.communication.emitResponse(incomingMessage, socketId);
-            incomingMessage.type = SocketIoReceiveTypes.Coordinates;
-            this.communication.emitRequest(incomingMessage, socketId);
-        });
+        // socket.on(SocketIoSendTypes.Coordinates, (incomingMessage: ICoordinatesMessage) => {
+        //     this.debugPrintMessage(incomingMessage);
+        //     // this.communication.emit(incomingMessage, socketId);
+        //     incomingMessage.type = SocketIoReceiveTypes.Coordinates;
+        //     this.communication.emit(incomingMessage, socketId);
+        // });
 
-        socket.on(SocketIoSendTypes.TileState, (incomingMessage: ITileStateMessage) => {
-            this.debugPrintMessage(incomingMessage);
-            this.communication.emitResponse(incomingMessage, socketId);
-            incomingMessage.type = SocketIoReceiveTypes.TileState;
-            this.communication.emitRequest(incomingMessage, socketId);
-        });
+        // socket.on(SocketIoSendTypes.TileState, (incomingMessage: ITileStateMessage) => {
+        //     this.debugPrintMessage(incomingMessage);
+        //     // this.communication.emit(incomingMessage, socketId);
+        //     incomingMessage.type = SocketIoReceiveTypes.TileState;
+        //     this.communication.emit(incomingMessage, socketId);
+        // });
 
-        socket.on(SocketIoSendTypes.RemainingTileState, (incomingMessage: ITileStateMessage) => {
-            this.debugPrintMessage(incomingMessage);
-            this.communication.emitResponse(incomingMessage, socketId);
+        // socket.on(SocketIoSendTypes.RemainingTileState, (incomingMessage: ITileStateMessage) => {
+        //     this.debugPrintMessage(incomingMessage);
+        //     // this.communication.emit(incomingMessage, socketId);
 
-            incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
-            this.communication.emitRequest(incomingMessage, socketId);
-        });
+        //     incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
+        //     this.communication.emit(incomingMessage, socketId);
+        // });
 
-        socket.on(SocketIoSendTypes.GameWon, (incomingMessage: IMessage) => {
-            this.debugPrintMessage(incomingMessage);
-            this.communication.emitResponse(incomingMessage, socketId);
+        // socket.on(SocketIoSendTypes.GameWon, (incomingMessage: IMessage) => {
+        //     this.debugPrintMessage(incomingMessage);
+        //     // this.communication.emit(incomingMessage, socketId);
 
-            incomingMessage.type = SocketIoReceiveTypes.GameWon;
-            this.communication.emitRequest(incomingMessage, socketId);
-        });
+        //     incomingMessage.type = SocketIoReceiveTypes.GameWon;
+        //     this.communication.emit(incomingMessage, socketId);
+        // });
     }
 
     private debugPrintMessage(msg: IMessage) {

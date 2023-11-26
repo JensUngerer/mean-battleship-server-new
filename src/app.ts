@@ -3,13 +3,13 @@ import { Application, Response, Request } from 'express';
 import express from 'express';
 import { Server } from 'http';
 import http from 'http';
-import socketIo, { Socket, Server as SocketIoServer } from 'socket.io';
 import path from 'path';
 import { Communication } from './communication';
 
 import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
 import { randomInt } from 'crypto';
-import bodyParser, { json } from 'body-parser';
+import bodyParser from 'body-parser';
+import { AnyAaaaRecord } from 'dns';
 // import { SocketIoSendTypes } from './../../common/src/communication/socketIoSendTypes';
 // import { SocketIoReceiveTypes } from '../../common/src/communication/socketIoReceiveTypes';
 
@@ -20,7 +20,6 @@ import bodyParser, { json } from 'body-parser';
 export class App {
     private express: Application;
     private server: Server;
-    private io: SocketIoServer<any>;
     // private socket: Socket;
 
     private communication: Communication;
@@ -30,8 +29,7 @@ export class App {
         this.express = express();
         this.server = http.createServer(this.express);
         // const options: socketIo.ServerOptions = {};
-        this.io = new SocketIoServer(this.server);
-        this.communication = new Communication(this.io);
+        this.communication = new Communication();
         this.messageForwarder = new MessageForwarder(this.communication, ConfigSocketIo.PORT);
     }
 
@@ -60,16 +58,21 @@ export class App {
             // console.log(request.url);
             // console.log(pathStr);
             if (!request || !request.body || !request.body.userId) {
-                console.error('cannot create connection as userId:' + userId);
+                console.error('cannot create connection as userId');
                 return;
             }
             const userId = request.body.userId;
             const randomPort = randomInt(10000);
 
-            this.communication.createWebsocketHostFor(userId, randomPort);
+            const socketPromise = this.communication.createWebsocketHostFor(userId, randomPort);
 
+            // client will send connect to websocket, if and only if the randomPort is delivered
             response.send({
                 port: randomPort
+            });
+
+            socketPromise.then((socket: any) => {
+                this.messageForwarder.registerOnSocket(userId, socket);
             });
         });
 
@@ -92,13 +95,13 @@ export class App {
             console.error('listening on:' + port);
         });
 
-        this.io.on(ConfigSocketIo.SOCKET_IO_CONNECT_ID, (socket: Socket) => {
-            // DEBUGGING:
-            console.error('client connected on port:' + port);
+        // this.io.on(ConfigSocketIo.SOCKET_IO_CONNECT_ID, (socket: Socket) => {
+        //     // DEBUGGING:
+        //     console.error('client connected on port:' + port);
 
-            const socketId: string = socket.id;
-            this.messageForwarder.registerOnSocket(socketId, socket);
-        });
+        //     const socketId: string = socket.id;
+        //     this.messageForwarder.registerOnSocket(socketId, socket);
+        // });
     }
 
     public shutdown(): Promise<boolean> {
@@ -118,11 +121,7 @@ export class App {
                         return;
                     }
                     console.error('http-server successfully closed');
-
-                    this.io.close(() => {
-                        console.error('socketIO.server closed');
-                    });
-
+             
                     resolve(true)
                 });
             });
