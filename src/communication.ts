@@ -26,15 +26,29 @@ export class Communication {
           return;
         }
         const userId = userIds[index];
-        this.webSocketServers[userId].close(
+        console.log(userId);
+        // https://stackoverflow.com/questions/48753517/node-websockets-ws-wss-how-to-tell-if-i-closed-the-connection-or-they-did
+        if (!userId){
+          console.error('no user:' + userId);
+          index++;
+          return;
+        }
+        const server = this.webSocketServers[userId];
+        if (!server) {
+          console.error('no server');
+          index++;
+          loop();
+          return;
+        }
+        server.close(
           // ()=> {
           //   index++;
           //   loop();
           // }
-          (error?: any) => {
-            console.error('error when closing:' + userId)
-            console.error(JSON.stringify(error, null, 4));
-          }
+          // (error?: any) => {
+          //   console.error('error when closing:' + userId)
+          //   console.error(JSON.stringify(error, null, 4));
+          // }
         );
         console.log('closed connection for:' + userId);
         index++;
@@ -61,7 +75,7 @@ export class Communication {
     console.log(JSON.stringify(config));
     ws.on(ConfigSocketIo.WS_CONNECT_ID, (innerWs: any) => {
       console.log('connected client on:' + randomPort)
-      this.webSocketServers[userId] = ws;
+      this.webSocketServers[userId] = innerWs;
       innerWs.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (rawMessage: any) => {
         const parsedMessage = JSON.parse(rawMessage);
         console.log(JSON.stringify(parsedMessage));
