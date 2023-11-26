@@ -99,25 +99,28 @@ export class App {
 
     public shutdown(): Promise<boolean> {
         return new Promise<boolean>((resolve: (value: boolean) => void, reject: (value: any) => void) => {
-            // https://stackoverflow.com/questions/18126677/node-js-socket-io-close-client-connection
-            this.messageForwarder.shutdown();
-            console.error('shutdown of sockets completed');
-            // https://hackernoon.com/graceful-shutdown-in-nodejs-2f8f59d1c357
-            this.server.close((err: any) => {
-                if (err) {
-                    console.error('error when closing the http-server');
-                    // console.error(err);
-                    // console.error(JSON.stringify(err, null, 4));
-                    reject(err);
-                    return;
-                }
-                console.error('http-server successfully closed');
+            const closeConnectionsPromise = this.communication.closeConnections();
+            closeConnectionsPromise.then(() => {
+                // https://stackoverflow.com/questions/18126677/node-js-socket-io-close-client-connection
+                this.messageForwarder.shutdown();
+                console.error('shutdown of sockets completed');
+                // https://hackernoon.com/graceful-shutdown-in-nodejs-2f8f59d1c357
+                this.server.close((err: any) => {
+                    if (err) {
+                        console.error('error when closing the http-server');
+                        // console.error(err);
+                        // console.error(JSON.stringify(err, null, 4));
+                        reject(err);
+                        return;
+                    }
+                    console.error('http-server successfully closed');
 
-                this.io.close(() => {
-                    console.error('socketIO.server closed');
+                    this.io.close(() => {
+                        console.error('socketIO.server closed');
+                    });
+
+                    resolve(true)
                 });
-
-                resolve(true)
             });
         });
     }

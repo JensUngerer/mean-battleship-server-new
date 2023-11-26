@@ -5,22 +5,44 @@ import * as jsonrpclite from 'jsonrpc-lite';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
 import http from 'http';
+import { resolve } from 'path';
 
 export class Communication {
   private readonly NO_GAME_PARTNER_FOUND = '';
   private readonly NO_MATCHING_GAME_PARTNER = '';
   private userIdSocketId: any = {};
   private usersMap: any = {};
-  private webSocketServers: {[key:string]: WebSocketServer} = {};
+  private webSocketServers: { [key: string]: WebSocketServer } = {};
 
-  constructor(private io: socketIo.Server) {}
+  constructor(private io: socketIo.Server) { }
 
   public closeConnections() {
-    for (const userId in this.webSocketServers) {
-        this.webSocketServers[userId].close((closingError: any) => {
-          console.log(JSON.stringify(closingError, null, 4));
-        });
-    }
+    return new Promise((resolve: (data: any) => void) => {
+      const userIds = Object.keys(this.webSocketServers);
+      let index = 0;
+      const loop = () => {
+        if (index > userIds.length) {
+          resolve(true);
+          return;
+        }
+        const userId = userIds[index];
+        this.webSocketServers[userId].close(
+          // ()=> {
+          //   index++;
+          //   loop();
+          // }
+          (error?: any) => {
+            console.error('error when closing:' + userId)
+            console.error(JSON.stringify(error, null, 4));
+          }
+        );
+        console.log('closed connection for:' + userId);
+        index++;
+        loop();
+      };
+      // inital call
+      loop();
+    });
   }
 
   createWebsocketHostFor(userId: any, randomPort: number) {
@@ -28,7 +50,7 @@ export class Communication {
     const httpServer = http.createServer({
 
     });
-  //  const url = ConfigSocketIo.SOCKET_IO_SERVER_URL_WS;
+    //  const url = ConfigSocketIo.SOCKET_IO_SERVER_URL_WS;
     // const url = ConfigSocketIo.SOCKET_IO_SERVER_URL_WS + ':' + randomPort;
     const config: ServerOptions = {
       // path: url,
@@ -37,16 +59,16 @@ export class Communication {
     };
     const ws = new WebSocketServer(config);
     console.log(JSON.stringify(config));
-    ws.on(ConfigSocketIo.WS_CONNECT_ID, (server: any) => {
+    ws.on(ConfigSocketIo.WS_CONNECT_ID, (innerWs: any) => {
       console.log('connected client on:' + randomPort)
-      this.webSocketServers[userId] = server;
-      server.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (rawMessage: any) => {
+      this.webSocketServers[userId] = ws;
+      innerWs.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (rawMessage: any) => {
         const parsedMessage = JSON.parse(rawMessage);
         console.log(JSON.stringify(parsedMessage));
-        server.send(JSON.stringify({message: 'pong'}));
+        innerWs.send(JSON.stringify({ message: 'pong' }));
       });
     });
-    httpServer.on('upgrade', (request, socket , head) => {
+    httpServer.on('upgrade', (request, socket, head) => {
       // https://github.com/websockets/ws
       ws.handleUpgrade(request, socket, head, (innerWs) => {
         ws.emit('connection', innerWs, request);
@@ -136,6 +158,6 @@ export class Communication {
 
   private debugPrint(msg: IMessage) {
     console.log('outgoing-message:')
-  	console.log(JSON.stringify(msg, null, 4));   
+    console.log(JSON.stringify(msg, null, 4));
   }
 }
