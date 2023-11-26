@@ -59,6 +59,10 @@ export class App {
             // DEBUGGING:
             // console.log(request.url);
             // console.log(pathStr);
+            if (!request || !request.body || !request.body.userId) {
+                console.error('cannot create connection as userId:' + userId);
+                return;
+            }
             const userId = request.body.userId;
             const randomPort = randomInt(10000);
 
