@@ -9,18 +9,18 @@ import { ITileStateMessage } from '../../common/src/communication/message/iTileS
 
 export class MessageForwarder {
 
-    private socketIdUserId: { [key: string]: string } = {};
-    private socketIdSocket: { [key: string]: Socket } = {};
+    // private socketIdUserId: { [key: string]: string } = {};
+    // private socketIdSocket: { [key: string]: Socket } = {};
     constructor(private communication: Communication, private port: number) { }
 
-    public shutdown() {
-        for (const socketId in this.socketIdSocket) {
-            if (this.socketIdSocket.hasOwnProperty(socketId)) {
-                const socket: Socket = this.socketIdSocket[socketId];
-                socket.disconnect(true);
-            }
-        }
-    }
+    // public shutdown() {
+    //     for (const socketId in this.socketIdSocket) {
+    //         if (this.socketIdSocket.hasOwnProperty(socketId)) {
+    //             const socket: Socket = this.socketIdSocket[socketId];
+    //             socket.disconnect(true);
+    //         }
+    //     }
+    // }
 
     public registerOnSocket(userId: string, socket: any) {
         // this.socketIdSocket[socketId] = socket;
@@ -33,6 +33,7 @@ export class MessageForwarder {
         });
 
         socket.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: any) => {
+            // TODO: process 'add user' == StartGame ...
             console.log('incoming:' + message);
         });
 

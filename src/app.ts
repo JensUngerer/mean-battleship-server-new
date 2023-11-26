@@ -52,6 +52,8 @@ export class App {
         // var urlencodedParser = bodyParser.urlencoded({ extended: false })
         const connectionApiSuffix = '/' + ConfigSocketIo.API_PATH + '/' + ConfigSocketIo.CONNECTION_PATH;
         this.express.post(connectionApiSuffix, jsonParser, (request: Request, response: Response) => {
+            // Show incoming request for randomPortNumber
+            console.log('trying to get ranomPort');
 
             // console.log(JSON.stringify(request.body, null, 4));
             // DEBUGGING:
@@ -109,8 +111,8 @@ export class App {
             const closeConnectionsPromise = this.communication.closeConnections();
             closeConnectionsPromise.then(() => {
                 // https://stackoverflow.com/questions/18126677/node-js-socket-io-close-client-connection
-                this.messageForwarder.shutdown();
-                console.error('shutdown of sockets completed');
+                // this.messageForwarder.shutdown();
+                // console.error('shutdown of sockets completed');
                 // https://hackernoon.com/graceful-shutdown-in-nodejs-2f8f59d1c357
                 this.server.close((err: any) => {
                     if (err) {
