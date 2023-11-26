@@ -107,8 +107,7 @@ export class Communication {
   //   console.log(JSON.stringify(jsonrpcMessage, null, 4));
   // }
 
-  public addUser(userId: string, socketId: string, incomingMsg: IMessage) {
-    this.userIdSocketId[userId] = socketId;
+  public addUser(userId: string) {
     const foundGamePartnerId = this.searchMatchingGamePartner(userId);
     if (foundGamePartnerId === this.NO_GAME_PARTNER_FOUND) {
       this.usersMap[userId] = this.NO_MATCHING_GAME_PARTNER;
@@ -122,12 +121,12 @@ export class Communication {
         targetUserId: beginningUserByGamble,
         sourceUserId: userId
       };
-      // this.emitRequest(msg, socketId);
       this.emit(msg.targetUserId, msg);
     }
   }
   emit(targetUserId: string | undefined, msg: IMessage) {
     if (!targetUserId) {
+      console.error('No target user id: cannot send message!');
       return;
     }
     const stringifiedMsg = JSON.stringify(msg);

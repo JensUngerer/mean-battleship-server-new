@@ -33,52 +33,55 @@ export class MessageForwarder {
         });
 
         socket.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: any) => {
-            // TODO: process 'add user' == StartGame ...
+            // DEBUGGING:
             console.log('incoming:' + message);
+            const incomingMessage = JSON.parse(message);
+
+            switch (incomingMessage.type) {
+                case SocketIoSendTypes.StartGame:
+                    this.debugPrintMessage(incomingMessage);
+                    const userId: string = incomingMessage.sourceUserId;
+                    // this.communication.emit(incomingMessage, socketId);
+
+                    this.communication.addUser(userId);
+                    break;
+                case SocketIoSendTypes.Coordinates:
+                    this.debugPrintMessage(incomingMessage);
+                    // this.communication.emit(incomingMessage, socketId);
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    incomingMessage.type = SocketIoReceiveTypes.Coordinates;
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    break;
+                case SocketIoSendTypes.TileState:
+                    this.debugPrintMessage(incomingMessage);
+                    // this.communication.emit(incomingMessage, socketId);
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    incomingMessage.type = SocketIoReceiveTypes.TileState;
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    break;
+                case SocketIoSendTypes.RemainingTileState:
+                    this.debugPrintMessage(incomingMessage);
+                    // this.communication.emit(incomingMessage, socketId);
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    break;
+                case SocketIoSendTypes.GameWon:
+                    this.debugPrintMessage(incomingMessage);
+                    // this.communication.emit(incomingMessage, socketId);
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    incomingMessage.type = SocketIoReceiveTypes.GameWon;
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    break;
+                default:
+                    console.log(JSON.stringify(incomingMessage, null, 4));
+                    break;
+            }
         });
-
-        // socket.on(SocketIoSendTypes.StartGame, (incomingMessage: IMessage) => {
-        //     this.debugPrintMessage(incomingMessage);
-        //     const userId: string = incomingMessage.sourceUserId;
-        //     // this.communication.emit(incomingMessage, socketId);
-            
-        //     this.socketIdUserId[userId] = userId;
-        //     this.communication.addUser(userId, socketId, incomingMessage);
-        // });
-
-        // socket.on(SocketIoSendTypes.Coordinates, (incomingMessage: ICoordinatesMessage) => {
-        //     this.debugPrintMessage(incomingMessage);
-        //     // this.communication.emit(incomingMessage, socketId);
-        //     incomingMessage.type = SocketIoReceiveTypes.Coordinates;
-        //     this.communication.emit(incomingMessage, socketId);
-        // });
-
-        // socket.on(SocketIoSendTypes.TileState, (incomingMessage: ITileStateMessage) => {
-        //     this.debugPrintMessage(incomingMessage);
-        //     // this.communication.emit(incomingMessage, socketId);
-        //     incomingMessage.type = SocketIoReceiveTypes.TileState;
-        //     this.communication.emit(incomingMessage, socketId);
-        // });
-
-        // socket.on(SocketIoSendTypes.RemainingTileState, (incomingMessage: ITileStateMessage) => {
-        //     this.debugPrintMessage(incomingMessage);
-        //     // this.communication.emit(incomingMessage, socketId);
-
-        //     incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
-        //     this.communication.emit(incomingMessage, socketId);
-        // });
-
-        // socket.on(SocketIoSendTypes.GameWon, (incomingMessage: IMessage) => {
-        //     this.debugPrintMessage(incomingMessage);
-        //     // this.communication.emit(incomingMessage, socketId);
-
-        //     incomingMessage.type = SocketIoReceiveTypes.GameWon;
-        //     this.communication.emit(incomingMessage, socketId);
-        // });
     }
 
     private debugPrintMessage(msg: IMessage) {
-        console.error('incoming-message');
+        console.error('incoming-message:');
         console.error(JSON.stringify(msg, null, 4));
     }
 }
