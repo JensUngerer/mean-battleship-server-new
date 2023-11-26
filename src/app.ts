@@ -5,10 +5,11 @@ import { Server } from 'http';
 import http from 'http';
 import socketIo, { Socket, Server as SocketIoServer } from 'socket.io';
 import path from 'path';
-
 import { Communication } from './communication';
 
 import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
+import { randomInt } from 'crypto';
+import bodyParser, { json } from 'body-parser';
 // import { SocketIoSendTypes } from './../../common/src/communication/socketIoSendTypes';
 // import { SocketIoReceiveTypes } from '../../common/src/communication/socketIoReceiveTypes';
 
@@ -45,6 +46,28 @@ export class App {
         // console.log(pathStr);
 
         this.express.use(express.static(pathStr));
+
+        // https://stackoverflow.com/questions/9177049/express-js-req-body-undefined
+        // create application/json parser
+        var jsonParser = bodyParser.json()
+        // create application/x-www-form-urlencoded parser
+        // var urlencodedParser = bodyParser.urlencoded({ extended: false })
+        const connectionApiSuffix = '/' + ConfigSocketIo.API_PATH + '/' + ConfigSocketIo.CONNECTION_PATH;
+        this.express.post(connectionApiSuffix, jsonParser, (request: Request, response: Response) => {
+
+            // console.log(JSON.stringify(request.body, null, 4));
+            // DEBUGGING:
+            // console.log(request.url);
+            // console.log(pathStr);
+            const userId = request.body.userId;
+            const randomPort = randomInt(10000);
+
+            this.communication.createWebsocketHostFor(userId, randomPort);
+
+            response.send({
+                port: randomPort
+            });
+        });
 
         // https://stackoverflow.com/questions/25216761/express-js-redirect-to-default-page-instead-of-cannot-get
         // https://stackoverflow.com/questions/30546524/making-angular-routes-work-with-express-routes
