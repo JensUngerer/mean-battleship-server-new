@@ -72,6 +72,12 @@ export class MessageForwarder {
                     incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
                     incomingMessage.type = SocketIoReceiveTypes.GameWon;
                     this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    const gameLostMsg: IMessage = {
+                        sourceUserId: incomingMessage.targetSocketId,
+                        targetUserId: incomingMessage.sourceUserId,
+                        type: SocketIoReceiveTypes.GameLost
+                    };
+                    this.communication.emit(gameLostMsg.targetUserId, gameLostMsg);
                     break;
                 default:
                     console.log(JSON.stringify(incomingMessage, null, 4));
