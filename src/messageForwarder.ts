@@ -6,6 +6,7 @@ import { SocketIoSendTypes } from '../../common/src/communication/socketIoSendTy
 import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
 import { ICommunicationContainer } from './../../common/src/communication/message/iCommunicationContainer';
 import { Communication } from './communication';
+import { CommunicationMethod } from '../../common/src/communication/communicationMethod';
 
 export class MessageForwarder {
 
@@ -46,8 +47,10 @@ export class MessageForwarder {
             }
             const requestObject = jsonRpcParsed.payload as RequestObject;
             const incomingMessage = requestObject.params as ICommunicationContainer;
-            // TODO: Forward to client
-            // const successResponse = jsonrpc.success(requestObject.id, '');
+            
+            // ACK
+            const successResponse = jsonrpc.success(requestObject.id, CommunicationMethod.PostAck);
+            socket.send(successResponse.serialize());
 
             // console.log(JSON.stringify(incomingMessage, null, 4));
             try {
