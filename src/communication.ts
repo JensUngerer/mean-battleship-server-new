@@ -122,10 +122,16 @@ export class Communication {
         userId,
         foundGamePartnerId
       );
+      let sourceUserId;
+      if (beginningUserByGamble == userId) {
+        sourceUserId = foundGamePartnerId;
+      } else {
+        sourceUserId = userId;
+      }
       const msg: ICommunicationContainer = {
         type: CommunicationType.BeginningUser,
         targetUserId: beginningUserByGamble,
-        sourceUserId: userId
+        sourceUserId: sourceUserId
       };
       this.emit(msg.targetUserId, msg);
     }
@@ -138,7 +144,7 @@ export class Communication {
     // const stringifiedMsg = JSON.stringify(msg);
     const outgoingMessage = jsonrpclite.request(v4(), CommunicationMethod.Post, msg)
     // DEBUG:
-    // console.log('sending:' + outgoingMessage.serialize());
+    console.log('sending:' + JSON.stringify(outgoingMessage, null, 4));
 
     this.webSocketServers[targetUserId].send(outgoingMessage.serialize());
   }

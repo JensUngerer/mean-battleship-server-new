@@ -52,6 +52,8 @@ export class MessageForwarder {
             const requestObject = jsonRpcParsed.payload as RequestObject;
             const incomingMessage = requestObject.params as ICommunicationContainer;
             
+            console.log('receiving:' + JSON.stringify(incomingMessage, null, 4));
+
             // ACK
             const successResponse = jsonrpc.success(requestObject.id, CommunicationMethod.PostAck);
             socket.send(successResponse.serialize());
