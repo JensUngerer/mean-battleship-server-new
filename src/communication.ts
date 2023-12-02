@@ -1,9 +1,12 @@
 import { IMessage } from './../../common/src/communication/message/iMessage';
-import { SocketIoReceiveTypes } from './../../common/src/communication/socketIoReceiveTypes';
 import * as jsonrpclite from 'jsonrpc-lite';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
 import http from 'http';
+import { ICommunicationContainer } from '../../common/src/communication/message/iCommunicationContainer';
+import { CommunicationType } from '../../common/src/communication/communicationType';
+import { CommunicationMethod } from './../../common/src/communication/communicationMethod';
+import { v4 } from 'uuid';
 
 export class Communication {
   private readonly NO_GAME_PARTNER_FOUND = '';
@@ -60,6 +63,9 @@ export class Communication {
       };
       const ws = new WebSocketServer(config);
       console.log(JSON.stringify(config));
+      ws.on(ConfigSocketIo.WS_CLOSE_ID, (err: any) => {
+        console.log('on-close:' + JSON.stringify(err, null, 4));
+      });
       ws.on(ConfigSocketIo.WS_CONNECT_ID, (innerWs: any) => {
         console.log('connected client on:' + randomPort);
         if (!userId) {
@@ -116,25 +122,25 @@ export class Communication {
         userId,
         foundGamePartnerId
       );
-      const msg: IMessage = {
-        type: SocketIoReceiveTypes.BeginningUser,
+      const msg: ICommunicationContainer = {
+        type: CommunicationType.BeginningUser,
         targetUserId: beginningUserByGamble,
         sourceUserId: userId
       };
       this.emit(msg.targetUserId, msg);
     }
   }
-  emit(targetUserId: string | undefined, msg: IMessage) {
+  emit(targetUserId: string | undefined, msg: ICommunicationContainer) {
     if (!targetUserId) {
       console.error('No target user id: cannot send message!');
       return;
     }
-    const stringifiedMsg = JSON.stringify(msg);
-
+    // const stringifiedMsg = JSON.stringify(msg);
+    const outgoingMessage = jsonrpclite.request(v4(), CommunicationMethod.Post, msg)
     // DEBUG:
-    console.log('sending:' + stringifiedMsg);
+    console.log('sending:' + outgoingMessage.serialize());
 
-    this.webSocketServers[targetUserId].send(stringifiedMsg);
+    this.webSocketServers[targetUserId].send(outgoingMessage.serialize());
   }
 
   public removeUser(userId: string) {
