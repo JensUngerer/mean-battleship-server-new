@@ -46,7 +46,7 @@ export class MessageForwarder {
                 return;
             }
             if (jsonRpcParsed.type == 'success') {
-                console.log("success:" + JSON.stringify(parsedMsg, null, 4));
+                // console.log("success:" + JSON.stringify(parsedMsg, null, 4));
                 return;
             }
             const requestObject = jsonRpcParsed.payload as RequestObject;
