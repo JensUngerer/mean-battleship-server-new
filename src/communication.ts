@@ -138,7 +138,7 @@ export class Communication {
     // const stringifiedMsg = JSON.stringify(msg);
     const outgoingMessage = jsonrpclite.request(v4(), CommunicationMethod.Post, msg)
     // DEBUG:
-    console.log('sending:' + outgoingMessage.serialize());
+    // console.log('sending:' + outgoingMessage.serialize());
 
     this.webSocketServers[targetUserId].send(outgoingMessage.serialize());
   }

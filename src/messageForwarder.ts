@@ -34,7 +34,7 @@ export class MessageForwarder {
 
         socket.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: string) => {
             // DEBUGGING:
-            console.log('incoming:' + message);
+            // console.log('incoming:' + message);
             // console.log(JSON.stringify(jsonrpc.parse(message)));
 
             const parsedMsg = JSON.parse(message);
