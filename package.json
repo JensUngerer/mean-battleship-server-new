@@ -32,6 +32,8 @@
     "@types/mongoose": "^5.11.97",
     "@types/node": "^20.10.0",
     "@types/socket.io": "^3.0.2",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
     "@typescript-eslint/parser": "^6.2.0",
     "body-parser": "^1.20.2",
@@ -53,8 +55,13 @@
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
+    "json-parse-even-better-errors": "^3.0.1",
+    "jsonrpc-lite": "^2.2.0",
     "lodash": "^4.17.21",
+    "parse-json": "^8.1.0",
     "socket.io": "^4.7.2",
+    "uuid": "^9.0.1",
+    "ws": "^8.14.2",
     "ws": "^8.14.2"
   }
 }

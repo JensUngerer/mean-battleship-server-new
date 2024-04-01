@@ -1,114 +1,119 @@
-import { Communication } from './communication';
-import { Socket } from "socket.io";
-import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
-import { SocketIoSendTypes } from '../../common/src/communication/socketIoSendTypes';
+import jsonrpc, { IParsedObject, RequestObject } from 'jsonrpc-lite';
+import { CommunicationType } from '../../common/src/communication/communicationType';
 import { IMessage } from '../../common/src/communication/message/iMessage';
-import { ICoordinatesMessage } from '../../common/src/communication/message/iCoordinatesMessage';
 import { SocketIoReceiveTypes } from '../../common/src/communication/socketIoReceiveTypes';
-import { ITileStateMessage } from '../../common/src/communication/message/iTileStateMessage';
+import { SocketIoSendTypes } from '../../common/src/communication/socketIoSendTypes';
+import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
+import { ICommunicationContainer } from './../../common/src/communication/message/iCommunicationContainer';
+import { Communication } from './communication';
+import { CommunicationMethod } from '../../common/src/communication/communicationMethod';
 
 export class MessageForwarder {
 
-    private socketIdUserId: { [key: string]: string } = {};
-    private socketIdSocket: { [key: string]: any } = {};
+    // private socketIdUserId: { [key: string]: string } = {};
+    // private socketIdSocket: { [key: string]: Socket } = {};
     constructor(private communication: Communication, private port: number) { }
 
-    public shutdown() {
-        for (const socketId in this.socketIdSocket) {
-            if (this.socketIdSocket.hasOwnProperty(socketId)) {
-                const socket: Socket = this.socketIdSocket[socketId];
-                socket.disconnect(true);
-            }
-        }
-    }
+    // public shutdown() {
+    //     for (const socketId in this.socketIdSocket) {
+    //         if (this.socketIdSocket.hasOwnProperty(socketId)) {
+    //             const socket: Socket = this.socketIdSocket[socketId];
+    //             socket.disconnect(true);
+    //         }
+    //     }
+    // }
 
-    public registerOnSocket(socketId: string, ws: any) {
-        this.socketIdSocket[socketId] = ws;
+    public registerOnSocket(userId: string, socket: any) {
+        // this.socketIdSocket[socketId] = socket;
 
-        ws.on(ConfigSocketIo.WS_CLOSE_ID, () => {
+        socket.on(ConfigSocketIo.WS_CLOSE_ID, () => {
             // DEBUGGING:
             console.log('client disconnected on port:' + this.port);
 
-            // this.communication.removeUser(this.socketIdUserId[socketId]);
-            // delete this.socketIdUserId[socketId];
+            this.communication.removeUser(userId);
         });
 
-        ws.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: any) => {
-            const incomingMessage: IMessage = JSON.parse(message);
+        socket.on(ConfigSocketIo.WS_ON_MESSAGE_ID, (message: string) => {
+            // DEBUGGING:
+            // console.log('incoming:' + message);
+            // console.log(JSON.stringify(jsonrpc.parse(message)));
+
+            const parsedMsg = JSON.parse(message);
+            // console.log(JSON.stringify(parsedMsg, null, 4));
+            const jsonRpcParsed = jsonrpc.parseObject(parsedMsg) as IParsedObject;;
+            if (jsonRpcParsed.type === 'invalid') {
+                console.error('incoming message is not a valid JSON-RPC - message');
+                return;
+            }
+            if (jsonRpcParsed.type == 'success') {
+                // console.log("success:" + JSON.stringify(parsedMsg, null, 4));
+                return;
+            }
+            const requestObject = jsonRpcParsed.payload as RequestObject;
+            const incomingMessage = requestObject.params as ICommunicationContainer;
+            
+            console.log('receiving:' + JSON.stringify(incomingMessage, null, 4));
+
+            // ACK
+            const successResponse = jsonrpc.success(requestObject.id, CommunicationMethod.PostAck);
+            socket.send(successResponse.serialize());
+
+            // console.log(JSON.stringify(incomingMessage, null, 4));
+            try {
+                // const incomingMessage = JSON.parse(message);
+                // const incomingMessage = jsonrpc.parseJsonRpcString(parseJson(message)) as IParsedObject;
+                // const incomingMessage = jsonrpc.parse(message) as IParsedObject;
+                // console.log(JSON.stringify(incomingMessage, null, 4));
+
+                // const requestObject: RequestObject = incomingMessage.payload as RequestObject;
+                // const success = jsonrpc.success(requestObject.id, '');
+                
+                // // const parsedObject: IParsedObject | IParsedObject[] = jsonrpc.parseObject(incomingMessage);
+                // // const jsonRpcMessage = parsedObject.payload as any;
+                // console.log(JSON.stringify(success, null, 4));
+            } catch (error: any) {
+                console.log('error:'+ JSON.stringify(error, null, 4));
+            }
+        
+            
             switch (incomingMessage.type) {
-                case SocketIoSendTypes.StartGame:
+                case CommunicationType.AddUser:
                     const userId: string = incomingMessage.sourceUserId;
-                    this.socketIdUserId[userId] = userId;
-                    this.communication.addUser(userId, socketId);
+                    this.communication.addUser(userId);
                     break;
-                case SocketIoSendTypes.Coordinates:
-                    // this.debugPrintMessage(incomingMessage);
-                    incomingMessage.type = SocketIoReceiveTypes.Coordinates;
-                    this.communication.emit(incomingMessage);
+                case CommunicationType.Coordinates:
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
                     break;
-                case SocketIoSendTypes.TileState:
-                    // this.debugPrintMessage(incomingMessage);
-                    incomingMessage.type = SocketIoReceiveTypes.TileState;
-                    this.communication.emit(incomingMessage);
+                case CommunicationType.TileState:
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
                     break;
-                case SocketIoSendTypes.RemainingTileState:
-                    // this.debugPrintMessage(incomingMessage);
-                    incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
-                    this.communication.emit(incomingMessage);
+                case CommunicationType.RemainingTileState:
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
                     break;
-                case SocketIoSendTypes.GameWon:
-                    // this.debugPrintMessage(incomingMessage);
-                    incomingMessage.type = SocketIoReceiveTypes.GameWon;
-                    this.communication.emit(incomingMessage);
+                case CommunicationType.GameWon:
+                    incomingMessage.targetUserId = this.communication.getTargetUser(incomingMessage.sourceUserId);
+                    incomingMessage.type = CommunicationType.GameWon;
+                    this.communication.emit(incomingMessage.targetUserId, incomingMessage);
+                    
+                    const gameLostMsg: ICommunicationContainer = {
+                        sourceUserId: incomingMessage.targetUserId as string,
+                        targetUserId: incomingMessage.sourceUserId,
+                        type: CommunicationType.GameLost
+                    };
+                    this.communication.emit(gameLostMsg.targetUserId, gameLostMsg);
                     break;
-                // case SocketIoReceiveTypes.BeginningUser:
-                // case SocketIoReceiveTypes.Coordinates:
-                // case SocketIoReceiveTypes.TileState:
-                // case SocketIoReceiveTypes.RemainingTileState:
-                // case SocketIoReceiveTypes.GameWon:
-                // case SocketIoReceiveTypes.InitialValue:
                 default:
-                    console.error('unknown message');
-                    console.error(JSON.stringify(incomingMessage, null, 4));
+                    console.log(JSON.stringify(incomingMessage, null, 4));
                     break;
             }
-
         });
-
-        // socket.on(SocketIoSendTypes.StartGame, (incomingMessage: IMessage) => {
-        //     // this.debugPrintMessage(incomingMessage);
-        //     const userId: string = incomingMessage.sourceUserId;
-        //     this.socketIdUserId[userId] = userId;
-        //     this.communication.addUser(userId, socketId);
-        // });
-
-        // socket.on(SocketIoSendTypes.Coordinates, (incomingMessage: ICoordinatesMessage) => {
-        //     // this.debugPrintMessage(incomingMessage);
-        //     incomingMessage.type = SocketIoReceiveTypes.Coordinates;
-        //     this.communication.emit(incomingMessage);
-        // });
-
-        // socket.on(SocketIoSendTypes.TileState, (incomingMessage: ITileStateMessage) => {
-        //     // this.debugPrintMessage(incomingMessage);
-        //     incomingMessage.type = SocketIoReceiveTypes.TileState;
-        //     this.communication.emit(incomingMessage);
-        // });
-
-        // socket.on(SocketIoSendTypes.RemainingTileState, (incomingMessage: ITileStateMessage) => {
-        //     // this.debugPrintMessage(incomingMessage);
-        //     incomingMessage.type = SocketIoReceiveTypes.RemainingTileState;
-        //     this.communication.emit(incomingMessage);
-        // });
-
-        // socket.on(SocketIoSendTypes.GameWon, (incomingMessage: IMessage) => {
-        //     // this.debugPrintMessage(incomingMessage);
-        //     incomingMessage.type = SocketIoReceiveTypes.GameWon;
-        //     this.communication.emit(incomingMessage);
-        // });
     }
 
     private debugPrintMessage(msg: IMessage) {
-        console.error('incoming-message');
+        console.error('incoming-message:');
         console.error(JSON.stringify(msg, null, 4));
     }
 }
