@@ -4,22 +4,12 @@ import express from 'express';
 import { Server } from 'http';
 import http from 'http';
 import path from 'path';
-<<<<<<< HEAD
-import { WebSocket, WebSocketServer } from 'ws';
-
-import { Communication } from './communication';
-
-import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
-import { IMessage } from '../../common/src/communication/message/iMessage';
-import { randomInt } from 'crypto';
-=======
 import { Communication } from './communication';
 
 import { ConfigSocketIo } from './../../common/src/config/configSocketIo';
 import { randomInt } from 'crypto';
 import bodyParser from 'body-parser';
 import { AnyAaaaRecord } from 'dns';
->>>>>>> using-json-rpc-messages
 // import { SocketIoSendTypes } from './../../common/src/communication/socketIoSendTypes';
 // import { SocketIoReceiveTypes } from '../../common/src/communication/socketIoReceiveTypes';
 
@@ -30,10 +20,6 @@ import { AnyAaaaRecord } from 'dns';
 export class App {
     private express: Application;
     private server: Server;
-<<<<<<< HEAD
-    // private io: SocketIoServer<any>;
-=======
->>>>>>> using-json-rpc-messages
     // private socket: Socket;
     private ws: any;
     private communication: Communication;
@@ -43,10 +29,6 @@ export class App {
         this.express = express();
         this.server = http.createServer(this.express);
         // const options: socketIo.ServerOptions = {};
-<<<<<<< HEAD
-        // this.io = new SocketIoServer(this.server);
-=======
->>>>>>> using-json-rpc-messages
         this.communication = new Communication();
         this.messageForwarder = new MessageForwarder(this.communication, ConfigSocketIo.PORT);
     }
@@ -123,62 +105,10 @@ export class App {
         //     const socketId: string = socket.id;
         //     this.messageForwarder.registerOnSocket(socketId, socket);
         // });
-<<<<<<< HEAD
-
-        // https://javascript-conference.com/blog/real-time-in-angular-a-journey-into-websocket-and-rxjs/
-        // port: ConfigSocketIo.PORT_WS, path: ConfigSocketIo.SOCKET_IO_SERVER_URL_WS
-        const wss = new WebSocketServer<any, any>({ server: this.server, });
-        wss.on(ConfigSocketIo.WS_CONNECT_ID, (ws: any, socket: any) => {
-            this.ws = ws;
-            this.communication.setWS(ws);
-
-            const randomId : string = randomInt(10000).toString();
-            console.info('client connected on port:' + port + 'id:' + randomId);
-            this.messageForwarder.registerOnSocket(randomId, ws);
-            // onConnection(ws);
-            //     ws.on('message', message => {
-            //       onMessage(message, ws);
-            //     });
-            //     ws.on('error', error => {
-            //       OnError(error);
-            //     });
-            //      ws.on('close', ws=> {
-            //       onClose();
-            //   })
-        });
-=======
->>>>>>> using-json-rpc-messages
     }
 
     public shutdown(): Promise<boolean> {
         return new Promise<boolean>((resolve: (value: boolean) => void, reject: (value: any) => void) => {
-<<<<<<< HEAD
-            // https://stackoverflow.com/questions/18126677/node-js-socket-io-close-client-connection
-            this.messageForwarder.shutdown();
-            console.error('shutdown of sockets completed');
-            // https://hackernoon.com/graceful-shutdown-in-nodejs-2f8f59d1c357
-            this.server.close((err: any) => {
-                if (err) {
-                    console.error('error when closing the http-server');
-                    // console.error(err);
-                    // console.error(JSON.stringify(err, null, 4));
-                    reject(err);
-                    return;
-                }
-                console.error('http-server successfully closed');
-
-                // this.io.close(() => {
-                //     console.error('socketIO.server closed');
-                // });
-                this.ws.close(
-                    () => {
-                        console.info('ws - server: closed');
-                    }
-                );
-
-
-                resolve(true)
-=======
             const closeConnectionsPromise = this.communication.closeConnections();
             closeConnectionsPromise.then(() => {
                 // https://stackoverflow.com/questions/18126677/node-js-socket-io-close-client-connection
@@ -197,7 +127,6 @@ export class App {
              
                     resolve(true)
                 });
->>>>>>> using-json-rpc-messages
             });
         });
     }

@@ -1,8 +1,4 @@
 import { IMessage } from './../../common/src/communication/message/iMessage';
-<<<<<<< HEAD
-import { SocketIoReceiveTypes } from './../../common/src/communication/socketIoReceiveTypes';
-// import socketIo from 'socket.io';
-=======
 import * as jsonrpclite from 'jsonrpc-lite';
 import { WebSocketServer, ServerOptions } from 'ws';
 import { ConfigSocketIo } from '../../common/src/config/configSocketIo';
@@ -11,34 +7,12 @@ import { ICommunicationContainer } from '../../common/src/communication/message/
 import { CommunicationType } from '../../common/src/communication/communicationType';
 import { CommunicationMethod } from './../../common/src/communication/communicationMethod';
 import { v4 } from 'uuid';
->>>>>>> using-json-rpc-messages
 
 export class Communication {
   private readonly NO_GAME_PARTNER_FOUND = '';
   private readonly NO_MATCHING_GAME_PARTNER = '';
   private userIdSocketId: any = {};
   private usersMap: any = {};
-<<<<<<< HEAD
-  private ws: any;
-
-
-  public setWS(ws: any) {
-    this.ws = ws;
-  }
-
-  constructor() {}
-
-  public emit(msg: IMessage) {
-    // this.debugPrint(msg);
-
-    msg.targetUserId = this.getTargetUser(msg.sourceUserId);
-    // http://stackoverflow.com/questions/24041220/sending-message-to-a-specific-id-in-socket-io-1-0
-    // const targetSocketId: string = this.userIdSocketId[msg.targetUserId as string];
-    // this.ws.to(targetSocketId).emit(msg.type, msg);
-    console.log('trying to send:' + JSON.stringify(msg));
-    
-    this.ws.send(JSON.stringify(msg));
-=======
   public webSocketServers: { [key: string]: any } = {};
 
   constructor() { }
@@ -76,7 +50,6 @@ export class Communication {
       // inital call
       loop();
     });
->>>>>>> using-json-rpc-messages
   }
 
   createWebsocketHostFor(userId: any, randomPort: number): Promise<any> {
