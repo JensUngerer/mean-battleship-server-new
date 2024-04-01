@@ -64,7 +64,8 @@ export class App {
                 return;
             }
             const userId = request.body.userId;
-            const randomPort = randomInt(10000);
+            const numberOfPrivilegedPorts = 1024;
+            const randomPort = randomInt(1000) + numberOfPrivilegedPorts + 1;
 
             const socketPromise = this.communication.createWebsocketHostFor(userId, randomPort);
 
